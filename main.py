@@ -1,4 +1,3 @@
-from os import name
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
