@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException, status
+from os import name
+from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from uuid import uuid4
+
 
 app = FastAPI()
 
@@ -29,7 +31,21 @@ class TaskUpdateSchema(BaseModel):
     completed: bool | None = None
 
 
+class CategorySchema(BaseModel):
+    id: str
+    name: str
+
+
+class CategoryCreateSchema(BaseModel):
+    name: str
+
+
+class CategoryUpdateSchema(BaseModel):
+    name: str
+
+
 tasks: list[TaskSchema] = []
+categories: list[CategorySchema] = []
 
 
 @app.get("/tasks")
@@ -61,4 +77,38 @@ def delete_task(task_id):
     for task in tasks:
         if task.id == task_id:
             tasks.remove(task)
+
+
+@app.get("/categories")
+def read_categories() -> list[CategorySchema]:
+    return categories
+
+
+@app.post("/categories", status_code=status.HTTP_201_CREATED)
+def create_category(payload: CategoryCreateSchema) -> CategorySchema:
+    new_category = CategorySchema(id=str(uuid4()), name=payload.name)
+    categories.append(new_category)
+    return new_category
+
+
+@app.patch("/categories/{category_id}")
+def update_category(category_id, payload: CategoryUpdateSchema):
+    for category in categories:
+        if category.id == category_id:
+            if payload.name is not None:
+                category.name = payload.name
+
+            return category
+    
+    raise HTTPException(status_code=404, detail="Category not found")
+
+
+@app.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_category(category_id):
+    for category in categories:
+        if category.id == category_id:
+            categories.remove(category)
+
+    raise HTTPException(status_code=404, detail="Category not found")
+
 
